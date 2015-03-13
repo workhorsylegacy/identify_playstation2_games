@@ -61,14 +61,14 @@ PREFIXES = [
 def get_playstation2_game_info(file_name):
 	# Skip if not an ISO
 	if not os.path.splitext(file_name.lower())[1] == '.iso':
-		return None
+		raise Exception("Not an ISO file.")
 
 	# Look at each file in the ISO
 	root_directory = None
 	try:
 		root_directory = read_udf.read_udf_file(file_name)
 	except:
-		return None
+		raise Exception("Failed to read as a DVD ISO.")
 		
 	for sub_entry in root_directory.all_entries:
 
@@ -88,19 +88,8 @@ def get_playstation2_game_info(file_name):
 
 		return (serial_number, proper_name)
 
-	return None
+	raise Exception("Failed to find game in database.")
 
-games = "E:/Sony/Playstation2/"
-for root, dirs, files in os.walk(games):
-	for file in files:
-		# Get the full path
-		entry = root + '/' + file
 
-		# Skip if not an ISO
-		if not os.path.splitext(entry.lower())[1] == '.iso':
-			continue
-
-		info = get_playstation2_game_info(entry)
-		print(info)
 
 		
