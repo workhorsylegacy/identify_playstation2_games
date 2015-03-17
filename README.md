@@ -3,6 +3,8 @@ identify_playstation2_games
 
 A module for identifying Sony Playstation 2 games with Python 2 &amp; 3
 
+Warning: It only works on DVD ISO files, and not yet CD ISO files.
+
 
 Example use:
 -----
