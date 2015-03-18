@@ -30,10 +30,24 @@ import sys, os
 import json
 import read_udf
 
-# Load the database
-with open('official_ps2_db.json', 'rb') as f:
-	official_db = json.loads(f.read())
+# Load the databases
+with open('db_playstation2_official_au.json', 'rb') as f:
+	db_playstation2_official_au = json.loads(f.read())
 
+with open('db_playstation2_official_eu.json', 'rb') as f:
+	db_playstation2_official_eu = json.loads(f.read())
+
+with open('db_playstation2_official_jp.json', 'rb') as f:
+	db_playstation2_official_jp = json.loads(f.read())
+
+with open('db_playstation2_official_ko.json', 'rb') as f:
+	db_playstation2_official_ko = json.loads(f.read())
+
+with open('db_playstation2_official_us.json', 'rb') as f:
+	db_playstation2_official_us = json.loads(f.read())
+
+
+# FIXME: Update this to have more prefixes and the new count
 # All possible serial number prefixes
 # Sorted by the number of games that use that prefix
 PREFIXES = [
@@ -79,12 +93,22 @@ def get_playstation2_game_info(file_name):
 		if serial_number.split('-')[0] not in PREFIXES:
 			continue
 
-		# Skip if unknown serial number
-		if serial_number not in official_db:
-			continue
-
 		# Look up the proper name
-		proper_name = official_db[serial_number]
+		proper_name = None
+		if serial_number not in db_playstation2_official_au:
+			proper_name = db_playstation2_official_au[serial_number]
+		elif serial_number not in db_playstation2_official_eu:
+			proper_name = db_playstation2_official_eu[serial_number]
+		elif serial_number not in db_playstation2_official_jp:
+			proper_name = db_playstation2_official_jp[serial_number]
+		elif serial_number not in db_playstation2_official_ko:
+			proper_name = db_playstation2_official_ko[serial_number]
+		elif serial_number not in db_playstation2_official_us:
+			proper_name = db_playstation2_official_us[serial_number]
+
+		# Skip if unknown serial number
+		if not proper_name:
+			continue
 
 		return (serial_number, proper_name)
 
