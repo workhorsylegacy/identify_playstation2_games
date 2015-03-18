@@ -144,31 +144,35 @@ def get_playstation2_game_info(file_name):
 			continue
 
 		# Look up the proper name
-		proper_name, region = None, None
+		title, region = None, None
 		if serial_number in db_playstation2_official_as:
 			region = "Asia"
-			proper_name = db_playstation2_official_as[serial_number]
+			title = db_playstation2_official_as[serial_number]
 		elif serial_number in db_playstation2_official_au:
 			region = "Australia"
-			proper_name = db_playstation2_official_au[serial_number]
+			title = db_playstation2_official_au[serial_number]
 		elif serial_number in db_playstation2_official_eu:
 			region = "Europe"
-			proper_name = db_playstation2_official_eu[serial_number]
+			title = db_playstation2_official_eu[serial_number]
 		elif serial_number in db_playstation2_official_jp:
 			region = "Japan"
-			proper_name = db_playstation2_official_jp[serial_number]
+			title = db_playstation2_official_jp[serial_number]
 		elif serial_number in db_playstation2_official_ko:
 			region = "Korea"
-			proper_name = db_playstation2_official_ko[serial_number]
+			title = db_playstation2_official_ko[serial_number]
 		elif serial_number in db_playstation2_official_us:
 			region = "USA"
-			proper_name = db_playstation2_official_us[serial_number]
+			title = db_playstation2_official_us[serial_number]
 
 		# Skip if unknown serial number
-		if not proper_name or not region:
+		if not title or not region:
 			continue
 
-		return (serial_number, region, proper_name)
+		return {
+			'serial_number' : serial_number,
+			'region' : region,
+			'title' : title
+		}
 
 	raise Exception("Failed to find game in database.")
 
