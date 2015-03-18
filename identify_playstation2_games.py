@@ -31,6 +31,9 @@ import json
 import read_udf
 
 # Load the databases
+with open('db_playstation2_official_as.json', 'rb') as f:
+	db_playstation2_official_as = json.loads(f.read())
+
 with open('db_playstation2_official_au.json', 'rb') as f:
 	db_playstation2_official_au = json.loads(f.read())
 
@@ -128,7 +131,9 @@ def get_playstation2_game_info(file_name):
 
 		# Look up the proper name
 		proper_name = None
-		if serial_number in db_playstation2_official_au:
+		if serial_number in db_playstation2_official_as:
+			proper_name = db_playstation2_official_as[serial_number]
+		elif serial_number in db_playstation2_official_au:
 			proper_name = db_playstation2_official_au[serial_number]
 		elif serial_number in db_playstation2_official_eu:
 			proper_name = db_playstation2_official_eu[serial_number]
