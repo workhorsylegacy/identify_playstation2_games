@@ -73,7 +73,6 @@ PREFIXES = [
 	'SCED', # 13 games
 	'NPJC', # 13 games
 	'GN', # 10 games
-	'SCPH', # 8 games
 	'GUST', # 8 games
 	'HSN', # 8 games
 	'SLED', # 6 games
