@@ -50,6 +50,20 @@ with open('db_playstation2_official_us.json', 'rb') as f:
 	db_playstation2_official_us = json.loads(f.read())
 
 
+dbs = [
+	#db_playstation2_official_as,
+	db_playstation2_official_au,
+	db_playstation2_official_eu,
+	db_playstation2_official_jp,
+	db_playstation2_official_ko,
+	db_playstation2_official_us,
+]
+for db in dbs:
+	for serial_number, title in db_playstation2_official_as.items():
+		if serial_number in db:
+			print(serial_number, title, db[serial_number]), 
+
+exit()
 # All possible serial number prefixes
 # Sorted by the number of games that use that prefix
 PREFIXES = [
@@ -130,25 +144,31 @@ def get_playstation2_game_info(file_name):
 			continue
 
 		# Look up the proper name
-		proper_name = None
+		proper_name, region = None, None
 		if serial_number in db_playstation2_official_as:
+			region = "Asia"
 			proper_name = db_playstation2_official_as[serial_number]
 		elif serial_number in db_playstation2_official_au:
+			region = "Australia"
 			proper_name = db_playstation2_official_au[serial_number]
 		elif serial_number in db_playstation2_official_eu:
+			region = "Europe"
 			proper_name = db_playstation2_official_eu[serial_number]
 		elif serial_number in db_playstation2_official_jp:
+			region = "Japan"
 			proper_name = db_playstation2_official_jp[serial_number]
 		elif serial_number in db_playstation2_official_ko:
+			region = "Korea"
 			proper_name = db_playstation2_official_ko[serial_number]
 		elif serial_number in db_playstation2_official_us:
+			region = "USA"
 			proper_name = db_playstation2_official_us[serial_number]
 
 		# Skip if unknown serial number
-		if not proper_name:
+		if not proper_name or not region:
 			continue
 
-		return (serial_number, proper_name)
+		return (serial_number, region, proper_name)
 
 	raise Exception("Failed to find game in database.")
 
