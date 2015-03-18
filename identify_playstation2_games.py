@@ -47,29 +47,63 @@ with open('db_playstation2_official_us.json', 'rb') as f:
 	db_playstation2_official_us = json.loads(f.read())
 
 
-# FIXME: Update this to have more prefixes and the new count
 # All possible serial number prefixes
 # Sorted by the number of games that use that prefix
 PREFIXES = [
-	'SLPM', # 2616 games
-	'SLES', # 2420 games
-	'SCES', # 2387 games
-	'SLUS', # 1857 games
-	'SLPS', # 1171 games
-	'SCUS', # 386 games
-	'SCPS', # 284 games
-	'SCAJ', # 217 games
-	'SLKA', # 122 games
-	'SLAJ', # 65 games
-	'SCKA', # 46 games
-	'TCPS', # 31 games
+	'SLPM', # 2962 games
+	'SLES', # 2845 games
+	'SCES', # 2464 games
+	'SLUS', # 2143 games
+	'SLPS', # 1474 games
+	'SCUS', # 402 games
+	'SCPS', # 289 games
+	'SCAJ', # 248 games
+	'SLKA', # 174 games
+	'SCKA', # 75 games
+	'SLAJ', # 67 games
+	'NPJD', # 66 games
+	'TCPS', # 60 games
+	'KOEI', # 56 games
+	'NPUD', # 31 games
+	'ALCH', # 19 games
+	'PBGP', # 16 games
+	'NPED', # 14 games
+	'CPCS', # 14 games
+	'FVGK', # 13 games
 	'SCED', # 13 games
+	'NPJC', # 13 games
+	'GN', # 10 games
+	'SCPH', # 8 games
+	'GUST', # 8 games
+	'HSN', # 8 games
 	'SLED', # 6 games
+	'DMP', # 4 games
+	'INCH', # 4 games
 	'PBPX', # 3 games
+	'KAD', # 3 games
+	'SLPN', # 3 games
 	'TCES', # 2 games
+	'NPUC', # 2 games
+	'DESR', # 2 games
 	'PAPX', # 1 game
 	'PBPS', # 1 game
 	'PCPX', # 1 game
+	'ROSE', # 1 game
+	'SRPM', # 1 game
+	'SCEE', # 1 game
+	'HAKU', # 1 game
+	'GER', # 1 game
+	'HKID', # 1 game
+	'MPR', # 1 game
+	'GWS', # 1 game
+	'HKHS', # 1 game
+	'NS', # 1 game
+	'XSPL', # 1 game
+	'Sierra', # 1 game
+	'ARZE', # 1 game
+	'VUGJ', # 1 game
+	'VO', # 1 game
+	'WFLD', # 1 game
 ]
 
 def get_playstation2_game_info(file_name):
