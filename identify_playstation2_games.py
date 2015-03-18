@@ -95,15 +95,15 @@ def get_playstation2_game_info(file_name):
 
 		# Look up the proper name
 		proper_name = None
-		if serial_number not in db_playstation2_official_au:
+		if serial_number in db_playstation2_official_au:
 			proper_name = db_playstation2_official_au[serial_number]
-		elif serial_number not in db_playstation2_official_eu:
+		elif serial_number in db_playstation2_official_eu:
 			proper_name = db_playstation2_official_eu[serial_number]
-		elif serial_number not in db_playstation2_official_jp:
+		elif serial_number in db_playstation2_official_jp:
 			proper_name = db_playstation2_official_jp[serial_number]
-		elif serial_number not in db_playstation2_official_ko:
+		elif serial_number in db_playstation2_official_ko:
 			proper_name = db_playstation2_official_ko[serial_number]
-		elif serial_number not in db_playstation2_official_us:
+		elif serial_number in db_playstation2_official_us:
 			proper_name = db_playstation2_official_us[serial_number]
 
 		# Skip if unknown serial number
