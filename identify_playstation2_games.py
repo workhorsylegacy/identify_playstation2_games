@@ -50,20 +50,6 @@ with open('db_playstation2_official_us.json', 'rb') as f:
 	db_playstation2_official_us = json.loads(f.read())
 
 
-dbs = [
-	#db_playstation2_official_as,
-	db_playstation2_official_au,
-	db_playstation2_official_eu,
-	db_playstation2_official_jp,
-	db_playstation2_official_ko,
-	db_playstation2_official_us,
-]
-for db in dbs:
-	for serial_number, title in db_playstation2_official_as.items():
-		if serial_number in db:
-			print(serial_number, title, db[serial_number]), 
-
-exit()
 # All possible serial number prefixes
 # Sorted by the number of games that use that prefix
 PREFIXES = [
