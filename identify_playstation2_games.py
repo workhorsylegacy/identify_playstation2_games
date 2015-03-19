@@ -29,6 +29,7 @@
 import sys, os
 import json
 import read_udf
+import iso9660
 
 # Load the databases
 with open('db_playstation2_official_as.json', 'rb') as f:
@@ -113,17 +114,36 @@ def get_playstation2_game_info(file_name):
 	if not os.path.splitext(file_name.lower())[1] == '.iso':
 		raise Exception("Not an ISO file.")
 
-	# Look at each file in the ISO
-	root_directory = None
+	# Look at each file in the DVD ISO
+	disc_type = None
+	entries = []
 	try:
 		root_directory = read_udf.read_udf_file(file_name)
-	except:
-		raise Exception("Failed to read as a DVD ISO.")
 		
-	for sub_entry in root_directory.all_entries:
+		for sub_entry in root_directory.all_entries:
+			entries.append(sub_entry.file_identifier)
+		disc_type = 'DVD'
+	except:
+		pass
+
+	# Look at each file in the CD ISO
+	try:
+		if not entries:
+			cd = iso9660.ISO9660(file_name)
+			for sub_entry in cd.tree():
+				entries.append(sub_entry.lstrip('/'))
+			disc_type = 'CD'
+	except:
+		pass
+
+	# Not a CD or DVD ISO
+	if not entries:
+		raise Exception("Failed to read as a CD or DVD ISO.")
+
+	for sub_entry in entries:
 
 		# Sanitize the file name with the serial number
-		serial_number = sub_entry.file_identifier.upper().replace('.', '').replace('_', '-')
+		serial_number = sub_entry.upper().replace('.', '').replace('_', '-')
 
 		# Skip if the serial number has an invalid prefix
 		if serial_number.split('-')[0] not in PREFIXES:
@@ -157,7 +177,8 @@ def get_playstation2_game_info(file_name):
 		return {
 			'serial_number' : serial_number,
 			'region' : region,
-			'title' : title
+			'title' : title,
+			'disc_type' : disc_type
 		}
 
 	raise Exception("Failed to find game in database.")
