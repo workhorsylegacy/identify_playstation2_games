@@ -1,11 +1,21 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+
+import sys
 import urllib
 import struct
 import datetime
 
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from StringIO import StringIO
+PY2 = (sys.version_info[0] == 2)
+
+
+if PY2:
+	try:
+		from cStringIO import StringIO
+	except ImportError:
+		from StringIO import StringIO
+else:
+	from io import StringIO
 
 SECTOR_SIZE = 2048
 
@@ -308,7 +318,7 @@ class ISO9660(object):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) < 2:
-        print "usage: python iso9660.py isourl [path]"
+        print("usage: python iso9660.py isourl [path]")
     else:
         iso_path = sys.argv[1]
         ret_path = sys.argv[2] if len(sys.argv) > 2 else None
@@ -317,4 +327,4 @@ if __name__ == '__main__':
             sys.stdout.write(cd.get_file(ret_path))
         else:
             for path in cd.tree():
-                print path
+                print(path)

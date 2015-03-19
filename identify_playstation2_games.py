@@ -32,6 +32,7 @@ import json
 import read_udf
 import iso9660
 
+PY2 = (sys.version_info[0] == 2)
 
 BUFFER_SIZE = 1024 * 1024 * 10
 MAX_PREFIX_LEN = 6
@@ -39,79 +40,99 @@ MAX_PREFIX_LEN = 6
 # All possible serial number prefixes
 # Sorted by the number of games that use that prefix
 PREFIXES = [
-	'SLPM', # 2962 games
-	'SLES', # 2845 games
-	'SCES', # 2464 games
-	'SLUS', # 2143 games
-	'SLPS', # 1474 games
-	'SCUS', # 402 games
-	'SCPS', # 289 games
-	'SCAJ', # 248 games
-	'SLKA', # 174 games
-	'SCKA', # 75 games
-	'SLAJ', # 67 games
-	'NPJD', # 66 games
-	'TCPS', # 60 games
-	'KOEI', # 56 games
-	'NPUD', # 31 games
-	'ALCH', # 19 games
-	'PBGP', # 16 games
-	'NPED', # 14 games
-	'CPCS', # 14 games
-	'FVGK', # 13 games
-	'SCED', # 13 games
-	'NPJC', # 13 games
-	'GN', # 10 games
-	'GUST', # 8 games
-	'HSN', # 8 games
-	'SLED', # 6 games
-	'DMP', # 4 games
-	'INCH', # 4 games
-	'PBPX', # 3 games
-	'KAD', # 3 games
-	'SLPN', # 3 games
-	'TCES', # 2 games
-	'NPUC', # 2 games
-	'DESR', # 2 games
-	'PAPX', # 1 game
-	'PBPS', # 1 game
-	'PCPX', # 1 game
-	'ROSE', # 1 game
-	'SRPM', # 1 game
-	'SCEE', # 1 game
-	'HAKU', # 1 game
-	'GER', # 1 game
-	'HKID', # 1 game
-	'MPR', # 1 game
-	'GWS', # 1 game
-	'HKHS', # 1 game
-	'NS', # 1 game
-	'XSPL', # 1 game
-	'Sierra', # 1 game
-	'ARZE', # 1 game
-	'VUGJ', # 1 game
-	'VO', # 1 game
-	'WFLD', # 1 game
+	b'SLPM', # 2962 games
+	b'SLES', # 2845 games
+	b'SCES', # 2464 games
+	b'SLUS', # 2143 games
+	b'SLPS', # 1474 games
+	b'SCUS', # 402 games
+	b'SCPS', # 289 games
+	b'SCAJ', # 248 games
+	b'SLKA', # 174 games
+	b'SCKA', # 75 games
+	b'SLAJ', # 67 games
+	b'NPJD', # 66 games
+	b'TCPS', # 60 games
+	b'KOEI', # 56 games
+	b'NPUD', # 31 games
+	b'ALCH', # 19 games
+	b'PBGP', # 16 games
+	b'NPED', # 14 games
+	b'CPCS', # 14 games
+	b'FVGK', # 13 games
+	b'SCED', # 13 games
+	b'NPJC', # 13 games
+	b'GN', # 10 games
+	b'GUST', # 8 games
+	b'HSN', # 8 games
+	b'SLED', # 6 games
+	b'DMP', # 4 games
+	b'INCH', # 4 games
+	b'PBPX', # 3 games
+	b'KAD', # 3 games
+	b'SLPN', # 3 games
+	b'TCES', # 2 games
+	b'NPUC', # 2 games
+	b'DESR', # 2 games
+	b'PAPX', # 1 game
+	b'PBPS', # 1 game
+	b'PCPX', # 1 game
+	b'ROSE', # 1 game
+	b'SRPM', # 1 game
+	b'SCEE', # 1 game
+	b'HAKU', # 1 game
+	b'GER', # 1 game
+	b'HKID', # 1 game
+	b'MPR', # 1 game
+	b'GWS', # 1 game
+	b'HKHS', # 1 game
+	b'NS', # 1 game
+	b'XSPL', # 1 game
+	b'Sierra', # 1 game
+	b'ARZE', # 1 game
+	b'VUGJ', # 1 game
+	b'VO', # 1 game
+	b'WFLD', # 1 game
 ]
 
 # Load the databases
-with open('db_playstation2_official_as.json', 'rb') as f:
+with open('db_playstation2_official_as.json', 'r') as f:
 	db_playstation2_official_as = json.loads(f.read())
 
-with open('db_playstation2_official_au.json', 'rb') as f:
+with open('db_playstation2_official_au.json', 'r') as f:
 	db_playstation2_official_au = json.loads(f.read())
 
-with open('db_playstation2_official_eu.json', 'rb') as f:
+with open('db_playstation2_official_eu.json', 'r') as f:
 	db_playstation2_official_eu = json.loads(f.read())
 
-with open('db_playstation2_official_jp.json', 'rb') as f:
+with open('db_playstation2_official_jp.json', 'r') as f:
 	db_playstation2_official_jp = json.loads(f.read())
 
-with open('db_playstation2_official_ko.json', 'rb') as f:
+with open('db_playstation2_official_ko.json', 'r') as f:
 	db_playstation2_official_ko = json.loads(f.read())
 
-with open('db_playstation2_official_us.json', 'rb') as f:
+with open('db_playstation2_official_us.json', 'r') as f:
 	db_playstation2_official_us = json.loads(f.read())
+
+
+# Convert the keys from strings to bytes
+if not PY2:
+	dbs = [
+		db_playstation2_official_as,
+		db_playstation2_official_au,
+		db_playstation2_official_eu,
+		db_playstation2_official_jp,
+		db_playstation2_official_ko,
+		db_playstation2_official_us
+	]
+	for db in dbs:
+		keys = db.keys()
+		for key in keys:
+			val = db[key]
+			del db[key]
+			key = str.encode(key)
+			db[key] = val
+
 
 
 def _find_in_binary(file_name):
@@ -134,10 +155,10 @@ def _find_in_binary(file_name):
 
 		# Check if the prefix is in the buffer
 		for prefix in PREFIXES:
-			m = re.search(prefix + "[\_|\-][\d|\.]+\;", rom_data)
-			if m and m.group():
+			m = re.search(prefix + b"[\_|\-][\d|\.]+\;", rom_data)
+			if m and m.group() and b'999.99' not in m.group():
 				# Get the serial number location
-				serial_number = m.group().replace('.', '').replace('_', '-').replace(';', '')
+				serial_number = m.group().replace(b'.', b'').replace(b'_', b'-').replace(b';', b'')
 				#print('serial_number', serial_number)
 
 				return serial_number
@@ -187,10 +208,10 @@ def get_playstation2_game_info(file_name):
 	for sub_entry in entries:
 
 		# Sanitize the file name with the serial number
-		serial_number = sub_entry.upper().replace('.', '').replace('_', '-')
+		serial_number = sub_entry.upper().replace(b'.', b'').replace(b'_', b'-')
 
 		# Skip if the serial number has an invalid prefix
-		if serial_number.split('-')[0] not in PREFIXES:
+		if serial_number.split(b'-')[0] not in PREFIXES:
 			continue
 
 		# Look up the proper name
