@@ -34,49 +34,51 @@
 
 
 import sys, os
+import struct
 
+MAX_INT = 2 ** (struct.Struct('i').size * 8 - 1) - 1
 HEADER_SIZE = 1024 * 32
 SECTOR_SIZE = 1024 * 2 # FIXME: This should not be hard coded
 
-def to_uint8(byte):
-	import struct
-	return struct.unpack('B', byte)[0]
+
+def to_uint8(buffer, start = 0):
+	return struct.unpack('B', buffer[start : start + 1])[0]
 
 def to_uint16(buffer, start = 0):
-	left = ((to_uint8(buffer[start + 1]) << 8) & 0xFF00)
-	right = ((to_uint8(buffer[start + 0]) << 0) & 0x00FF)
+	left = ((to_uint8(buffer, start + 1) << 8) & 0xFF00)
+	right = ((to_uint8(buffer, start + 0) << 0) & 0x00FF)
 	return (left | right)
 
 def to_uint32(buffer, start = 0):
-	a = ((to_uint8(buffer[start + 3]) << 24) & 0xFF000000)
-	b = ((to_uint8(buffer[start + 2]) << 16) & 0x00FF0000)
-	c = ((to_uint8(buffer[start + 1]) << 8) & 0x0000FF00)
-	d = ((to_uint8(buffer[start + 0]) << 0) & 0x000000FF)
+	a = ((to_uint8(buffer, start + 3) << 24) & 0xFF000000)
+	b = ((to_uint8(buffer, start + 2) << 16) & 0x00FF0000)
+	c = ((to_uint8(buffer, start + 1) << 8) & 0x0000FF00)
+	d = ((to_uint8(buffer, start + 0) << 0) & 0x000000FF)
 	return(a | b | c | d)
 
 def to_uint64(buffer, start = 0):
-	a = ((to_uint8(buffer[start + 7]) << 56) & 0xFF00000000000000)
-	b = ((to_uint8(buffer[start + 6]) << 48) & 0x00FF000000000000)
-	c = ((to_uint8(buffer[start + 5]) << 40) & 0x0000FF0000000000)
-	d = ((to_uint8(buffer[start + 4]) << 32) & 0x000000FF00000000)
-	e = ((to_uint8(buffer[start + 3]) << 24) & 0x00000000FF000000)
-	f = ((to_uint8(buffer[start + 2]) << 16) & 0x0000000000FF0000)
-	g = ((to_uint8(buffer[start + 1]) << 8) & 0x000000000000FF00)
-	h = ((to_uint8(buffer[start + 0]) << 0) & 0x00000000000000FF)
+	a = ((to_uint8(buffer, start + 7) << 56) & 0xFF00000000000000)
+	b = ((to_uint8(buffer, start + 6) << 48) & 0x00FF000000000000)
+	c = ((to_uint8(buffer, start + 5) << 40) & 0x0000FF0000000000)
+	d = ((to_uint8(buffer, start + 4) << 32) & 0x000000FF00000000)
+	e = ((to_uint8(buffer, start + 3) << 24) & 0x00000000FF000000)
+	f = ((to_uint8(buffer, start + 2) << 16) & 0x0000000000FF0000)
+	g = ((to_uint8(buffer, start + 1) << 8) & 0x000000000000FF00)
+	h = ((to_uint8(buffer, start + 0) << 0) & 0x00000000000000FF)
 	return(a | b | c | d | e | f | g | h)
 
 def round_up(value, unit):
-	return ((value + (unit - 1)) / unit) * unit
+	return ((value + (unit - 1)) // unit) * unit
 
 def to_dstring(buffer, offset, count):
-	byte_len = to_uint8(buffer[offset + count - 1])
+	byte_len = to_uint8(buffer, offset + count - 1)
 	return to_dchars(buffer, offset, byte_len)
 
 def to_dchars(buffer, offset, count):
 	if count == 0:
-		return ""
+		return b""
 
-	alg = to_uint8(buffer[offset])
+	alg = to_uint8(buffer, offset)
 
 	if alg not in [8, 16]:
 		raise Exception("Corrupt compressed unicode string")
@@ -85,22 +87,22 @@ def to_dchars(buffer, offset, count):
 
 	pos = 1
 	while pos < count:
-		ch = to_uint8("\0")
+		ch = to_uint8(b"\0")
 
 		if alg == 16:
-			ch = (to_uint8(buffer[offset + pos]) << 8)
+			ch = (to_uint8(buffer, offset + pos) << 8)
 			pos += 1
 
 		if pos < count:
-			ch |= to_uint8(buffer[offset + pos])
+			ch |= to_uint8(buffer, offset + pos)
 			pos += 1
 
 		result.append(ch)
 
 	# Convert from ints to chars
-	result = [chr(n) for n in result]
+	result = [bytes(chr(n), 'utf-8') for n in result]
 
-	return ''.join(result)
+	return b''.join(result)
 
 
 class BaseTag(object):
@@ -128,9 +130,11 @@ class BaseTag(object):
 		for i in range(16):
 			if i == 4:
 				continue
-			checksum += to_uint8(buffer[start + i])
+
+			checksum += to_uint8(buffer, start + i)
 
 		# Truncate int to uint8
+		b = checksum
 		while checksum >= 256:
 			checksum -= 256
 
@@ -144,7 +148,9 @@ class BaseTag(object):
 
 	# Make sure the reserved space is all zeros
 	def _assert_reserve_space(self, buffer, start, length):
-		for n in buffer[start : start + length]:
+		buf_seg = buffer[start : start + length]
+		for i in range(len(buf_seg)):
+			n = buf_seg[i : i + 1]
 			if not to_uint8(n) == 0:
 				raise Exception("Reserve space at {0} was not zero.".format(start))
 
@@ -173,7 +179,7 @@ class EntityID(BaseTag):
 		super(EntityID, self).__init__(32, buffer, start)
 
 		self.entity_id_type = entity_id_type
-		self.flags = to_uint8(buffer[start + 0])
+		self.flags = to_uint8(buffer, start + 0)
 		self.identifier = buffer[start + 1 : start + 24]
 		self.identifier_suffix = buffer[start + 24 : start + 32]
 
@@ -208,8 +214,8 @@ class DescriptorTag(BaseTag):
 
 		self.tag_identifier = to_uint16(buffer, start + 0)
 		self.descriptor_version = to_uint16(buffer, start + 2)
-		self.tag_check_sum = to_uint8(buffer[start + 4])
-		self.reserved = to_uint8(buffer[start + 5])
+		self.tag_check_sum = to_uint8(buffer, start + 4)
+		self.reserved = to_uint8(buffer, start + 5)
 		self.tag_serial_number = to_uint16(buffer, start + 6)
 		self.descriptor_crc = to_uint16(buffer, start + 8)
 		self.descriptor_crc_length = to_uint16(buffer, start + 10)
@@ -396,7 +402,7 @@ class LogicalVolumeDescriptor(BaseTag):
 		self.integrity_sequence_extent = ExtentDescriptor(buffer, start + 432)
 		self._raw_partition_maps = buffer[start + 440 : start + 512]
 
-		if not "*OSTA UDF Compliant" in self.domain_identifier.identifier:
+		if not b"*OSTA UDF Compliant" in self.domain_identifier.identifier:
 			raise Exception("Logical Volume is not OSTA compliant")
 
 	# "10.6.13 Partition Maps (BP 440)" of http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-167.pdf
@@ -405,7 +411,7 @@ class LogicalVolumeDescriptor(BaseTag):
 		retval = []
 		part_start = 0
 		for i in range(self.number_of_partition_maps):
-			partition_type = to_uint8(buffer[part_start])
+			partition_type = to_uint8(buffer, part_start)
 			partitioin = None
 			if partition_type == 1:
 				partition = Type1PartitionMap(buffer, part_start)
@@ -454,8 +460,8 @@ class Type1PartitionMap(BaseTag):
 	def __init__(self, buffer, start):
 		super(Type1PartitionMap, self).__init__(6, buffer, start)
 
-		self.partition_map_type = to_uint8(buffer[start + 0])
-		self.partition_map_length = to_uint8(buffer[start + 1])
+		self.partition_map_type = to_uint8(buffer, start + 0)
+		self.partition_map_length = to_uint8(buffer, start + 1)
 		self.volume_sequence_number = to_uint16(buffer, start + 2)
 		self.partition_number = to_uint16(buffer, start + 4)
 
@@ -471,8 +477,8 @@ class Type2PartitionMap(BaseTag):
 	def __init__(self, buffer, start):
 		super(Type2PartitionMap, self).__init__(64, buffer, start)
 
-		self.partition_map_type = to_uint8(buffer[start + 0])
-		self.partition_map_length = to_uint8(buffer[start + 1])
+		self.partition_map_type = to_uint8(buffer, start + 0)
+		self.partition_map_length = to_uint8(buffer, start + 1)
 		self.partition_type_identifier = EntityID(EntityIdType.UDFIdentifier, start + 4, start + 32)
 
 		if not self.partition_map_type == 2:
@@ -496,8 +502,8 @@ class FileEntry(BaseTag):
 		self.gid = to_uint32(buffer, start + 40)
 		self.permissions = to_uint32(buffer, start + 44)
 		self.file_link_count = to_uint16(buffer, start + 48)
-		self.record_format = to_uint8(buffer[start + 50])
-		self.record_display_attributes = to_uint8(buffer[start + 51])
+		self.record_format = to_uint8(buffer, start + 50)
+		self.record_display_attributes = to_uint8(buffer, start + 51)
 		self.record_length = to_uint32(buffer, start + 52)
 		self.information_length = to_uint64(buffer, start + 56)
 		self.logical_blocks_recorded = to_uint64(buffer, start + 64)
@@ -543,7 +549,7 @@ class ICBTag(BaseTag):
 		self.strategy_parameter = buffer[start + 6 : start + 2]
 		self.maximum_number_of_entries = to_uint16(buffer, start + 8)
 		self.reserved = buffer[start + 10: start + 11]
-		self.file_type = to_uint8(buffer[start + 11])
+		self.file_type = to_uint8(buffer, start + 11)
 		self.parent_icb_location = LogicalBlockAddress(buffer, start + 12)
 		raw_flags = to_uint16(buffer, start + 18)
 		self.allocation_type = raw_flags & 0x3
@@ -602,7 +608,7 @@ class FileContentBuffer(object):
 				if sad.flags != 0:
 					raise NotImplementedError("Can't use extents that are not recorded and allocated.")
 
-				new_extent = CookedExtent(file_pos, sys.maxint, sad.extent_location * self.block_size, sad.extent_length)
+				new_extent = CookedExtent(file_pos, MAX_INT, sad.extent_location * self.block_size, sad.extent_length)
 				self.extents.append(new_extent)
 				file_pos += sad.extent_length
 				i += sad.size
@@ -642,7 +648,7 @@ class FileContentBuffer(object):
 			to_read = min(total_to_read - total_read, extent.length - extent_offset)
 
 			part = None
-			if extent.partition != sys.maxint:
+			if extent.partition != MAX_INT:
 				part = self.logical_partitions[extent.partition]
 			else:
 				part = self.partition
@@ -716,8 +722,8 @@ class FileIdentifierDescriptor(BaseTag):
 		self._assert_tag_identifier(TagIdentifier.FileIdentifierDescriptor)
 
 		self.file_version_number = to_uint16(buffer, start + 16)
-		self.file_characteristics = to_uint8(buffer[start + 18])
-		self.length_of_file_identifier = to_uint8(buffer[start + 19])
+		self.file_characteristics = to_uint8(buffer, start + 18)
+		self.length_of_file_identifier = to_uint8(buffer, start + 19)
 		self.ICB = LongAllocationDescriptor(buffer, start + 20)
 		self.length_of_implementation_use = to_uint16(buffer, start + 36)
 		self.implementation_use = buffer[start + 38 : start + 38 + self.length_of_implementation_use]
@@ -732,7 +738,7 @@ class FileIdentifierDescriptor(BaseTag):
 class Directory(File):
 	def __init__(self, context, partition, file_entry):
 		super(Directory, self).__init__(context, partition, file_entry, partition.logical_block_size)
-		if self.file_content.capacity > sys.maxint:
+		if self.file_content.capacity > MAX_INT:
 			raise NotImplementedError("Directory too big")
 
 		self._entries = []
@@ -740,7 +746,7 @@ class Directory(File):
 
 		pos = 0
 		while pos < len(content_bytes):
-			id = FileIdentifierDescriptor(content_bytes, pos)
+			id = FileIdentifierDescriptor(content_bytes, int(pos))
 
 			if (id.file_characteristics & (FileCharacteristic.deleted | FileCharacteristic.parent)) == 0:
 				self._entries.append(id)
@@ -785,18 +791,18 @@ def is_valid_udf(file, file_size):
 			break
 
 		# Get the sector meta data
-		structure_type = to_uint8(buffer[0])
+		structure_type = to_uint8(buffer, 0)
 		standard_identifier = buffer[1 : 6]
-		structure_version = to_uint8(buffer[6])
+		structure_version = to_uint8(buffer, 6)
 
 		# Check if we have the beginning, middle, or end
-		if standard_identifier in ['BEA01']:
+		if standard_identifier in [b'BEA01']:
 			has_bea = True
-		elif standard_identifier in ['NSR02', 'NSR03']:
+		elif standard_identifier in [b'NSR02', b'NSR03']:
 			has_vsd = True
-		elif standard_identifier in ['TEA01']:
+		elif standard_identifier in [b'TEA01']:
 			has_tea = True
-		elif standard_identifier in ['BOOT2', 'CD001', 'CDW02']:
+		elif standard_identifier in [b'BOOT2', b'CD001', b'CDW02']:
 			pass
 		else:
 			is_valid = False

@@ -32,7 +32,6 @@ import json
 import read_udf
 import iso9660
 
-PY2 = (sys.version_info[0] == 2)
 
 BUFFER_SIZE = 1024 * 1024 * 10
 MAX_PREFIX_LEN = 6
@@ -96,43 +95,45 @@ PREFIXES = [
 ]
 
 # Load the databases
-with open('db_playstation2_official_as.json', 'r') as f:
-	db_playstation2_official_as = json.loads(f.read())
+with open('db_playstation2_official_as.json', 'rb') as f:
+	db_playstation2_official_as = json.loads(f.read().decode('utf8'))
 
-with open('db_playstation2_official_au.json', 'r') as f:
-	db_playstation2_official_au = json.loads(f.read())
+with open('db_playstation2_official_au.json', 'rb') as f:
+	db_playstation2_official_au = json.loads(f.read().decode('utf8'))
 
-with open('db_playstation2_official_eu.json', 'r') as f:
-	db_playstation2_official_eu = json.loads(f.read())
+with open('db_playstation2_official_eu.json', 'rb') as f:
+	db_playstation2_official_eu = json.loads(f.read().decode('utf8'))
 
-with open('db_playstation2_official_jp.json', 'r') as f:
-	db_playstation2_official_jp = json.loads(f.read())
+with open('db_playstation2_official_jp.json', 'rb') as f:
+	db_playstation2_official_jp = json.loads(f.read().decode('utf8'))
 
-with open('db_playstation2_official_ko.json', 'r') as f:
-	db_playstation2_official_ko = json.loads(f.read())
+with open('db_playstation2_official_ko.json', 'rb') as f:
+	db_playstation2_official_ko = json.loads(f.read().decode('utf8'))
 
-with open('db_playstation2_official_us.json', 'r') as f:
-	db_playstation2_official_us = json.loads(f.read())
+with open('db_playstation2_official_us.json', 'rb') as f:
+	db_playstation2_official_us = json.loads(f.read().decode('utf8'))
 
 
 # Convert the keys from strings to bytes
-if not PY2:
-	dbs = [
-		db_playstation2_official_as,
-		db_playstation2_official_au,
-		db_playstation2_official_eu,
-		db_playstation2_official_jp,
-		db_playstation2_official_ko,
-		db_playstation2_official_us
-	]
-	for db in dbs:
-		keys = db.keys()
-		for key in keys:
-			val = db[key]
-			del db[key]
-			key = str.encode(key)
-			db[key] = val
+dbs = [
+	db_playstation2_official_as,
+	db_playstation2_official_au,
+	db_playstation2_official_eu,
+	db_playstation2_official_jp,
+	db_playstation2_official_ko,
+	db_playstation2_official_us
+]
+for db in dbs:
+	keys = db.keys()
+	for key in keys:
+		# Get the value
+		val = db[key]
 
+		# Remove the unicode key
+		db.pop(key)
+
+		# Add the bytes key and value
+		db[bytes(key, 'utf-8')] = val
 
 
 def _find_in_binary(file_name):
@@ -177,6 +178,7 @@ def get_playstation2_game_info(file_name):
 	# Look at each file in the DVD ISO
 	disc_type = None
 	entries = []
+
 	try:
 		root_directory = read_udf.read_udf_file(file_name)
 		

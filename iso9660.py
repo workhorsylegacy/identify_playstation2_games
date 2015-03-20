@@ -15,7 +15,7 @@ if PY2:
 	except ImportError:
 		from StringIO import StringIO
 else:
-	from io import StringIO
+	from io import BytesIO
 
 SECTOR_SIZE = 2048
 
@@ -24,7 +24,7 @@ class ISO9660IOError(IOError):
         self.path = path
 
     def __str__(self):
-        return "Path not found: %s" % self.path
+        return "Path not found: {0}".format(self.path)
 
 class ISO9660(object):
     def __init__(self, url):
@@ -62,8 +62,8 @@ class ISO9660(object):
             p['ex_loc'] = self._unpack('<I')
             p['parent'] = self._unpack('<H')
             p['name']   = self._unpack_string(l1)
-            if p['name'] == '\x00':
-                p['name'] = ''
+            if p['name'] == b'\x00':
+                p['name'] = b''
 
             if l1%2 == 1:
                 self._unpack('B')
@@ -82,14 +82,14 @@ class ISO9660(object):
         if get_files:
             gen = self._tree_node(self._root)
         else:
-            gen = self._tree_path('', 1)
+            gen = self._tree_path(b'', 1)
 
-        yield '/'
+        yield b'/'
         for i in gen:
             yield i
 
     def _tree_path(self, name, index):
-        spacer = lambda s: "%s/%s" % (name, s)
+        spacer = lambda s: name + b"/" + s
         for i, c in enumerate(self._paths):
             if c['parent'] == index and i != 0:
                 yield spacer(c['name'])
@@ -97,7 +97,7 @@ class ISO9660(object):
                     yield d
 
     def _tree_node(self, node):
-        spacer = lambda s: "%s/%s" % (node['name'], s)
+        spacer = lambda s: node['name'] + b"/" + s
         for c in list(self._unpack_dir_children(node)):
             yield spacer(c['name'])
             if c['flags'] & 2:
@@ -109,7 +109,7 @@ class ISO9660(object):
     ##
 
     def get_file(self, path):
-        path = path.upper().strip('/').split('/')
+        path = path.upper().strip(b'/').split(b'/')
         path, filename = path[:-1], path[-1]
 
         if len(path)==0:
@@ -135,13 +135,13 @@ class ISO9660(object):
             self._buff.close()
         opener = urllib.FancyURLopener()
         opener.http_error_206 = lambda *a, **k: None
-        opener.addheader("Range", "bytes=%d-%d" % (start, start+length-1))
+        opener.addheader(b"Range", b"bytes={0}-{1}".format(start, start+length-1))
         self._buff = opener.open(self._url)
 
     def _get_sector_file(self, sector, length):
         with open(self._url, 'rb') as f:
             f.seek(sector*SECTOR_SIZE)
-            self._buff = StringIO(f.read(length))
+            self._buff = BytesIO(f.read(length))
 
     ##
     ## Return the record for final directory in a path
@@ -228,9 +228,9 @@ class ISO9660(object):
         d['volume_sequence']      = self._unpack_both('h')
 
         l2 = self._unpack('B')
-        d['name'] = self._unpack_string(l2).split(';')[0]
-        if d['name'] == '\x00':
-            d['name'] = ''
+        d['name'] = self._unpack_string(l2).split(b';')[0]
+        if d['name'] == b'\x00':
+            d['name'] = b''
 
         if l2 % 2 == 0:
             self._unpack('B')
@@ -287,7 +287,7 @@ class ISO9660(object):
         return a
 
     def _unpack_string(self, l):
-        return self._buff.read(l).rstrip(' ')
+        return self._buff.read(l).rstrip(b' ')
 
     def _unpack(self, st):
         if st[0] not in ('<','>'):
@@ -304,8 +304,12 @@ class ISO9660(object):
     def _unpack_dir_datetime(self):
         epoch = datetime.datetime(1970, 1, 1)
         date = self._unpack_raw(7)
-        t = [struct.unpack('<B', i)[0] for i in date[:-1]]
-        t.append(struct.unpack('<b', date[-1])[0])
+        t = []
+        date_sub = date[:-1]
+        for i in range(len(date_sub)):
+            n = date_sub[i : i + 1]
+            t.append(struct.unpack('<B', n)[0])
+        t.append(struct.unpack('<b', date[-1 : ])[0])
         t[0] += 1900
         t_offset = t.pop(-1) * 15 * 60.    # Offset from GMT in 15min intervals, converted to secs
         t_timestamp = (datetime.datetime(*t) - epoch).total_seconds() - t_offset
