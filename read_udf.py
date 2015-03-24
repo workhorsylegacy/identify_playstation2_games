@@ -36,6 +36,8 @@
 import sys, os
 import struct
 
+IS_PY2 = sys.version_info[0] == 2
+
 MAX_INT = 2 ** (struct.Struct('i').size * 8 - 1) - 1
 HEADER_SIZE = 1024 * 32
 SECTOR_SIZE = 1024 * 2 # FIXME: This should not be hard coded
@@ -100,7 +102,10 @@ def to_dchars(buffer, offset, count):
 		result.append(ch)
 
 	# Convert from ints to chars
-	result = [bytes(chr(n), 'utf-8') for n in result]
+	if IS_PY2:
+		result = [bytes(chr(n)) for n in result]
+	else:
+		result = [bytes(chr(n), 'utf-8') for n in result]
 
 	return b''.join(result)
 

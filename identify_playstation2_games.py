@@ -32,6 +32,7 @@ import json
 import read_udf
 import iso9660
 
+IS_PY2 = sys.version_info[0] == 2
 
 BUFFER_SIZE = 1024 * 1024 * 10
 MAX_PREFIX_LEN = 6
@@ -133,7 +134,10 @@ for db in dbs:
 		db.pop(key)
 
 		# Add the bytes key and value
-		db[bytes(key, 'utf-8')] = val
+		if IS_PY2:
+			db[bytes(key)] = val
+		else:
+			db[bytes(key, 'utf-8')] = val
 
 
 def _find_in_binary(file_name):
